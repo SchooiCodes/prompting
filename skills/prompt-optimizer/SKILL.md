@@ -34,15 +34,29 @@ rather than improve it.
    instructions. Ask which model will run the prompt when it changes the answer.
 5. **Make the result testable.** An optimized prompt should come with success
    criteria and a couple of representative test inputs.
+6. **Ask before templating.** Missing *runtime data* becomes a clearly labeled
+   placeholder; a missing *goal, artifact, or success criterion* becomes a
+   clarifying question. Never guess the core task.
 
 ## Workflow
 
 ### Step 1 — Capture the goal and the draft
 
 Identify: the user's intent, the draft prompt (if any), the target model/family,
-and the desired output. If any are missing, make a reasoned assumption and state
-it; ask a clarifying question only when the answer would materially change the
-rewrite. Limit clarifications to 1–3 high-value questions.
+and the desired output. Then decide whether to ask or to rewrite:
+
+- **Ask first** when a *core task definition* is missing — what the model must
+  do, on what input, or what a correct result looks like. This includes a
+  request to test/evaluate something when no artifact, expected behavior, or
+  test inputs were supplied. Without these, any "optimized prompt" is a guess.
+  Ask 1–3 concrete questions and wait for the answers before rewriting.
+- **Assume and state** when only secondary details are missing (tone, exact
+  length, audience). Proceed with the rewrite and list the assumptions.
+- **Placeholder only for runtime data** — text the user will paste in when they
+  actually run the prompt (a document, dataset, contract, raw notes). Label it
+  clearly, e.g. `{{PASTE_CONTRACT_HERE}}`.
+
+Never turn a missing core task definition into a placeholder to be filled later.
 
 ### Step 2 — Diagnose
 
@@ -95,7 +109,9 @@ Respond in this order:
 4. **How to test it** — define success and give 2–3 representative test inputs,
    including one edge case.
 
-Keep prose minimal; the optimized prompt is the product.
+Keep prose minimal; the optimized prompt is the product. If Step 1 ended with
+clarifying questions, deliver only those questions — do not include an
+optimized prompt or a test plan until the user answers.
 
 ## Guardrails
 
@@ -103,6 +119,14 @@ Keep prose minimal; the optimized prompt is the product.
   non-deterministic and depend on the model and data.
 - Do not invent facts, policies, or source content to fill gaps — mark missing
   context as a placeholder such as `{{CONTEXT}}` for the user to supply.
+- **Never combine unresolved placeholders with a "stop / refuse if missing"
+  rule.** A prompt that both leaves `{{...}}` unfilled and tells the model to
+  halt when information is missing can never succeed. Either ask the user for
+  those values (core task details) or omit the refusal rule and keep the
+  placeholder strictly for runtime data the user will paste in.
+- Do not build a rigid template around a request whose inputs were never
+  supplied. If the user asks to test or evaluate something but provides no
+  artifact, expected behavior, or test inputs, ask for them first.
 - Do not add chain-of-thought requests for reasoning models.
 - Do not over-structure a trivial prompt; note when the original was already
   good and only small edits were needed.

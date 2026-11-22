@@ -36,6 +36,12 @@ assumption instead.
 - Do you want a single prompt or a multi-step workflow?
 - Is there an example of a good result you can point to?
 
+For a **test/evaluate** request, ask specifically:
+
+- What exactly is the artifact to test (name, code, config, plugin definition)?
+- What input does it take, how does it process it, and what should it output?
+- What concrete sample inputs should be run, and what is the expected result for each?
+
 ## Transformation patterns
 
 | Pattern | Apply when | Operation |
@@ -50,6 +56,41 @@ assumption instead.
 | Decomposition | Several jobs at once | Break into chained steps with handoff names |
 | Guardrailing | Missing info is likely | Add "I don't know" and quote-grounding rules |
 | Simplification | Prompt is bloated or targets a reasoning model | Remove tags/recaps/redundant steps |
+| Clarify-first | Core task, artifact, or success criteria are missing | Ask 1–3 questions and stop; do not emit a placeholder template |
+
+## Handling missing information
+
+Use this decision rule before rewriting anything:
+
+| What is missing | Action |
+| --- | --- |
+| Runtime data the user will paste in later (document, dataset, raw text) | Keep a clearly labeled placeholder, e.g. `{{PASTE_CONTRACT_HERE}}` |
+| Secondary detail (tone, length, audience) | Assume it, state the assumption, proceed |
+| Core task, artifact to test, expected behavior, or test inputs | Ask 1–3 concrete questions and stop — do not deliver a rewrite |
+
+**Anti-pattern (never do this):**
+
+```text
+Plugin: {{PLUGIN_NAME_OR_DESCRIPTION_OR_CODE}}
+Expected behavior: {{WHAT_THE_PLUGIN_SHOULD_DO}}
+Test inputs: {{SAMPLE_INPUTS_TO_RUN}}
+If a test input or the expected behavior is missing, respond with exactly
+"Not enough information to test" instead of guessing.
+```
+
+This fails twice over: the placeholders hold the *core task definition* (not
+runtime data), and the "stop if missing" rule guarantees the prompt halts
+because those placeholders will still be unfilled. A prompt cannot both require
+values and forbid proceeding without them.
+
+**Correct handling for the same request:**
+
+> To test the plugin, I need three things: (1) the plugin itself — its name, code,
+> or configuration; (2) what it takes as input and should produce as output; and
+> (3) the sample inputs to run, with the expected result for each. Please provide
+> those and I'll run every case and report input / expected / actual / PASS or FAIL.
+
+Only after those answers arrive does a rewrite (or the test itself) make sense.
 
 ## Worked examples
 
